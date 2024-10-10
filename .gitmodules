@@ -1,0 +1,6 @@
+[submodule "cube20src"]
+	path = cube20src
+	url = https://github.com/rokicki/cube20src.git
+[submodule "vcube"]
+	path = vcube
+	url = https://github.com/Voltara/vcube.git

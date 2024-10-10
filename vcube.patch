@@ -1,0 +1,19 @@
+diff --git a/src/vc-optimal.cpp b/src/vc-optimal.cpp
+index d7fdd53..07741f5 100644
+--- a/src/vc-optimal.cpp
++++ b/src/vc-optimal.cpp
+@@ -101,11 +101,11 @@ struct solver_variant {
+  * will see little use.
+  */
+ static std::vector<solver_variant> solvers = {
+-	//solver_variant::S<nx::EP1, nx::EO4,   7>(104),
+-	//solver_variant::S<nx::EP1, nx::EO8,   8>(108),
++	solver_variant::S<nx::EP1, nx::EO4,   7>(104),
++	solver_variant::S<nx::EP1, nx::EO8,   8>(108),
+ 	solver_variant::S<nx::EP1, nx::EO12,  9>(112),
+ 
+-	//solver_variant::S<nx::EP2, nx::EO4,   8>(204),
++	solver_variant::S<nx::EP2, nx::EO4,   8>(204),
+ 	solver_variant::S<nx::EP2, nx::EO8,   9>(208),
+ 	solver_variant::S<nx::EP2, nx::EO12, 10>(212),
+ 
