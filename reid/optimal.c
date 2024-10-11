@@ -7,7 +7,7 @@
 #define  USE_METRIC           FACE_TURN_METRIC
 #define  SEARCH_LIMIT                        0
 #define  USE_SYMMETRY                        1
-#define  ONE_SOLUTION_ONLY                   0
+#define  ONE_SOLUTION_ONLY                   1
 
 
 #include  <stdio.h>
@@ -4269,7 +4269,15 @@ for (ii = start_depth; ii <= search_limit; ii += p_current_metric->increment)
        }
 
     if (sol_found)
+	   {
+       printf("solution found %2d%c   (", ii, p_current_metric->metric_char);
+       pretty_print_unsigned_int(n_nodes);
+       printf(" nodes, ");
+       pretty_print_unsigned_int(n_tests);
+       printf(" tests)\n");
+       fflush(stdout);
        break;
+	   }
     }
 
 return;

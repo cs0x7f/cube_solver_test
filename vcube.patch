@@ -1,5 +1,30 @@
+diff --git a/src/nxsolve.h b/src/nxsolve.h
+index 6794ea8..65ccfec 100644
+--- a/src/nxsolve.h
++++ b/src/nxsolve.h
+@@ -71,10 +71,12 @@ class solver : public solver_base {
+     public:
+ 	solver(prune_t &P) : P(P), n_expands(), moves(), movep(moves) {
+ 	}
++	uint64_t n_evals;
+ 
+ 	auto solve(const cube6 &c6, int limit = 20) {
+ 		movep = moves;
+ 		n_expands = 0;
++		n_evals = 0;
+ 
+ 		uint8_t len = 0xff;
+ 		auto limit1 = std::min(limit, prune_t::BASE + 4);
+@@ -105,6 +107,7 @@ class solver : public solver_base {
+ 		if (max_depth == 0) {
+ 			return c6 != cube();
+ 		}
++		n_evals++;
+ 
+ 		uint32_t prune_vals;
+ 		uint8_t axis_mask;
 diff --git a/src/vc-optimal.cpp b/src/vc-optimal.cpp
-index d7fdd53..07741f5 100644
+index d7fdd53..a0b5bca 100644
 --- a/src/vc-optimal.cpp
 +++ b/src/vc-optimal.cpp
 @@ -101,11 +101,11 @@ struct solver_variant {
@@ -16,4 +41,16 @@ index d7fdd53..07741f5 100644
 +	solver_variant::S<nx::EP2, nx::EO4,   8>(204),
  	solver_variant::S<nx::EP2, nx::EO8,   9>(208),
  	solver_variant::S<nx::EP2, nx::EO12, 10>(212),
+ 
+@@ -397,9 +397,10 @@ void solver(const std::string &table_filename, uint32_t shm_key) {
+ 						moves = moves.canonical();
+ 						std::string solution = moves.to_string(cf.style);
+ 
+-						snprintf(buf, sizeof(buf), "%lu %.9f %lu %s",
++						snprintf(buf, sizeof(buf), "%lu %.9f %lu %lu %s",
+ 								solution_id,
+ 								elapsed.count(),
++								S.n_evals,
+ 								moves.size(),
+ 								solution.c_str());
  
