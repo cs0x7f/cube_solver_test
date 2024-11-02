@@ -4,3 +4,6 @@
 [submodule "vcube"]
 	path = vcube
 	url = https://github.com/Voltara/vcube.git
+[submodule "h48"]
+	path = h48
+	url = https://github.com/sebastianotronto/h48.git
