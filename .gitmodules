@@ -7,3 +7,6 @@
 [submodule "h48"]
 	path = h48
 	url = https://github.com/sebastianotronto/h48.git
+[submodule "RubiksCube-OptimalSolver"]
+	path = RubiksCube-OptimalSolver
+	url = https://github.com/hkociemba/RubiksCube-OptimalSolver.git

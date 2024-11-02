@@ -69,7 +69,7 @@ function h48() (
 	readarray -t scrambles < <(cat $dataset | head -n$ntest | sed "s/1//g")
 	TIMEFORMAT='Time= %3R'
 	(for ((i = 0 ; i < $ntest ; i++ )); do
-		(time ./run solve_scramble -solver "h48$2k2" -moves "${scrambles[i]}" 2>&1) 2>&1 | grep "Solution found" -A4
+		(time ./run solve_scramble -solver "h48$2k2" -moves "${scrambles[i]}" 2>&1) 2>&1 | grep "Solution found" -A10
 	done) |\
 	awk '/^Nodes visited/ {
 		cnt += 1;
@@ -85,12 +85,12 @@ function h48() (
 )
 
 function cubeopt() (
-	echo "test cube$3opt$2 $1"
+	echo "test cube$3$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
 	cd ../cubeopt
 	cat $dataset | head -n$ntest |\
 	head -n$ntest |\
-	./cube$3opt$2 - |\
+	./cube$3$2 - |\
 	awk '/finished/ {
 		split($5, s, "/");
 		split($7, t, "=");
@@ -103,6 +103,23 @@ function cubeopt() (
 	}'
 )
 
+function kocpy() (
+	echo "test kocpy $1"
+	dataset=$(pwd)/dataset/$1.txt
+	cd RubiksCube-OptimalSolver
+	cat $dataset | head -n$ntest |\
+	head -n$ntest |\
+	pypy3 cmd.py |\
+	awk '/total time/ {
+		cnt += 1;
+		node += $7;
+		tt += $3;
+		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, $7/1e6, $3*1e9/$7);
+	} END {
+		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e9/node, tt/cnt);
+	}'
+)
+
 function runtest() {
 	if [[ "$1" =~ ^nxopt([0-9]{2})$ ]]; then
 		nxopt $2 ${BASH_REMATCH[1]}
@@ -110,12 +127,16 @@ function runtest() {
 		vcube $2 ${BASH_REMATCH[1]}
 	elif [[ "$1" =~ ^reid$ ]]; then
 		reid $2
+	elif [[ "$1" =~ ^kocpy$ ]]; then
+		kocpy $2
 	elif [[ "$1" =~ ^h48(h[0-9]{1,2})$ ]]; then
 		h48 $2 ${BASH_REMATCH[1]}
 	elif [[ "$1" =~ ^cubeopt([0-9]{2})$ ]]; then
-		cubeopt $2 ${BASH_REMATCH[1]} ""
-	elif [[ "$1" =~ ^cube48opt([0-9])$ ]]; then
-		cubeopt $2 ${BASH_REMATCH[1]} "48"
+		cubeopt $2 ${BASH_REMATCH[1]} "opt"
+	elif [[ "$1" =~ ^cube48opt([0-9]{1,2})$ ]]; then
+		cubeopt $2 ${BASH_REMATCH[1]} "48opt"
+	elif [[ "$1" =~ ^cubenp([0-9]{2})$ ]]; then
+		cubeopt $2 ${BASH_REMATCH[1]} "np"
 	fi
 }
 
@@ -124,5 +145,7 @@ runtest $1 $2
 # runtest nxopt11 random_move_15f
 # runtest vcube104 random_move_15f
 # runtest h48h0 random_move_15f
+# runtest kocpy random_move_15f
+# runtest reid random_move_15f
 # ntest=500 bash runtest.sh vcube112 random_move_16f
 
