@@ -66,11 +66,8 @@ function h48() (
 	echo "test h48$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
 	cd h48
-	readarray -t scrambles < <(cat $dataset | head -n$ntest | sed "s/1//g")
-	TIMEFORMAT='Time= %3R'
-	(for ((i = 0 ; i < $ntest ; i++ )); do
-		(time ./run solve_scramble -solver "h48$2k2" -moves "${scrambles[i]}" 2>&1) 2>&1 | grep "Solution found" -A10
-	done) |\
+	cat $dataset | head -n$ntest |\
+	python3 cmd.py h48$2k2 2>&1 |\
 	awk '/^Nodes visited/ {
 		cnt += 1;
 		node += $3;
