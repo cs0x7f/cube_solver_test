@@ -1,0 +1,239 @@
+diff --git a/frontend/main.cpp b/frontend/main.cpp
+index 872c3a6..2a78a5a 100755
+--- a/frontend/main.cpp
++++ b/frontend/main.cpp
+@@ -11,11 +11,82 @@ using namespace std;
+ #include <algorithm>
+ #include <iomanip>
+ 
+-int main() {
++int input_scramble(Puzzle &cc) {
++    char buf[1024];
++    if (fgets(buf, 1023, stdin) == 0) {
++        return -1;
++    }
++    char *s = buf;
++    int axis = 0;
++    int pow = 0;
++    static const char *move2str[18] = {
++        "U ", "U2", "U'",
++        "R ", "R2", "R'",
++        "F ", "F2", "F'",
++        "D ", "D2", "D'",
++        "L ", "L2", "L'",
++        "B ", "B2", "B'"
++    };
++    while (*s) {
++        if (*s <= ' ') {
++            s++;
++            continue;
++        }
++        switch (*s) {
++            case 'U':
++            case 'R':
++            case 'F':
++            case 'D':
++            case 'L':
++            case 'B':
++            if (pow != 0) {
++                cc.applyMoves(move2str[axis * 3 + pow - 1]);
++                pow = 0;
++            }
++        };
++        switch (*s) {
++            case 'U': axis = 0; pow = 1; break;
++            case 'R': axis = 1; pow = 1; break;
++            case 'F': axis = 2; pow = 1; break;
++            case 'D': axis = 3; pow = 1; break;
++            case 'L': axis = 4; pow = 1; break;
++            case 'B': axis = 5; pow = 1; break;
++            case '\'':
++            case '-': pow = (4 - pow) % 4; break;
++            case '3': pow = pow * 3 % 4; break;
++            case '2': pow = pow * 2 % 4; break;
++            case '+':
++            case '1': break;
++            default:
++                printf("Illegal modifier in %c\n", *s);
++                exit(10);
++        }
++        s++;
++    }
++    if (pow != 0) {
++        cc.applyMoves(move2str[axis * 3 + pow - 1]);
++        pow = 0;
++    }
++    return 0;
++}
++
++int main(int argc, char const *argv[]) {
++    char action = 'l';
++    int n_threads = 0;
++    for (int i = 1; i < argc; i++) {
++        if (argv[i][0] == '-' && i < argc - 1) {
++            switch (argv[i][1]) {
++                case 't': n_threads = std::stoi(argv[i + 1]); i++; break;
++            }
++        } else {
++            action = argv[i][0];
++        }
++    }
+     cerr << "----------------------------------------------------------------\n";
+     try {
+         // Solver3x3 solver("U U2 U' R R2 R' F F2 F' D D2 D' L L2 L' B B2 B'");
+         Solver3x3 solver;
++        solver.cfg = new SolverConfig(n_threads);
+ 
+         solver.cfg->pruiningTablesPath = "./tables";
+         solver.cfg->maxMemoryInGb = 16;
+@@ -33,9 +104,10 @@ int main() {
+ 
+         int Q = 6;
+ 
+-        //p.applyMoves("U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"); // superflip finds 1 solution in 34 seconds
++        // p.applyMoves("U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"); // superflip finds 1 solution in 34 seconds
+         //p.applyMoves("F U' F2 D' B U R' F' L D' R' U' L U B' D2 R' F U2 D2"); // hardest
+ 
++        /*
+         p = {
+             W, R, W, W, W, W, W, O, W, // classic test, should get all solutions in 1 sec for 14 moves
+             G, W, G, G, G, G, G, G, G, // 14 -> 1.1 seconds.
+@@ -44,36 +116,50 @@ int main() {
+             O, G, O, O, O, O, O, O, O, //
+             Y, Y, Y, Y, Y, Y, Y, Y, Y  // z diag
+         };
++        */
+ 
+         // p.applyMoves("R U2 R2 L2 D L' F' R' L D2 R2 L2 U' L F L'"); // 6 flip
+         //p.applyMoves("R D R2 U2 F' L F' L2 U R2 L2 F2 L2 F2 U2 F2 D L2 B' U2");// 1 solution 17
+         //p.applyMoves("R U R' U R U R' F' R U R' U' R' F R2 U' R' U2 R U' R'"); // nperm
+         //p.applyMoves("D' L' D' L U2 R' F2 L2 U' L' D' F D' F' U L U2 R' U'"); // depth 18 done in 70.64 s 232 s laptop
+         // cout << p.toString() << endl;
+-        solver.tableProgressCallback = [&](int p) { solver.cfg->log << "table: " << p << "%\n"; };
+-        solver.progressCallback = [&](int p) { solver.cfg->log << "solver: " << p << "%\n"; };
++        // solver.tableProgressCallback = [&](int p) { solver.cfg->log << "table: " << p << "%\n"; };
++        // solver.progressCallback = [&](int p) { solver.cfg->log << "solver: " << p << "%\n"; };
+         solver.init();
+-
++        p.applyMoves("U R2 F B R B2 R U2 L B2 R U' D' R2 F R' L B2 U2 F2"); // superflip finds 1 solution in 34 seconds
++        solver.solveStrings(p, 1, 1);
++        while (true) {
++            if (action != '-') {
++                break;
++            }
++            Solver::node_cnt = 0;
++            Puzzle p = Puzzle3x3("U U2 U' R R2 R' F F2 F' D D2 D' L L2 L' B B2 B'");//M M2 M' S S2 S' E E2 E'
++            if (input_scramble(p) != 0) {
++                break;
++            }
++            auto start = high_resolution_clock::now();
++            for (int i = 0; i < 21; i++) {
++                auto slnQ = solver.solveStrings(p, i, 1);
++                cout << "Depth " << i << " completed, " << solver.node_cnt << " nodes visited\n";
++                if (slnQ.size() > 0) {
++                    auto stop = high_resolution_clock::now();
++                    auto duration = duration_cast<chrono::duration<double>>(stop - start);
++                    cout << "Solution found after " << solver.node_cnt << " nodes in " << duration.count() * 1e3 << " ms: " << slnQ[0] << "\n";
++                    break;
++                }
++            }
++        }
+ 
+         // cout << solver.printTableStats();
+ 
+         // auto solutions = solver.solve(p, 14, -1); //16
+         // cout << solutions;
+ 
+-        auto slnQ = solver.asyncSolveStrings(p, 14, 1);
+-        // ofstream ff("all_superflip.txt");
+-        try {
+-            while (slnQ->hasNext()) { slnQ->pop(); }
+-            // while (slnQ->hasNext()) { cout << slnQ->pop() << "\n"; }
+-            // while (slnQ->hasNext()) { auto sol = slnQ->pop(); ff << sol << "\n";cout << sol << "\n";}
+-        } catch (runtime_error& e) { cout << e.what() << endl; }
+ 
+         string tmp = "";
+         // while (*slnQ >> tmp) { cout << tmp << "\n"; }
+ 
+-        cout << slnQ->numResults() << "\n"; //140
+-
+-        std::cout << solver.printTableStats() << std::endl;
++        // std::cout << solver.printTableStats() << std::endl;
+ 
+         return 0;
+     } catch (runtime_error& e) {
+diff --git a/include/stickersolve/config.hpp b/include/stickersolve/config.hpp
+index e67d686..a77f2bd 100755
+--- a/include/stickersolve/config.hpp
++++ b/include/stickersolve/config.hpp
+@@ -15,8 +15,10 @@ public:
+     estd::clone_ptr<estd::thread_pool> threadPool{8};
+     bool useMmapForPruning = false;
+     int overrideDepth = 0; // zero just uses the defaults
+-    SolverConfig() {
+-        int hwt = (int)std::thread::hardware_concurrency();
++    SolverConfig(int hwt = 0) {
++        if (hwt == 0) {
++            hwt = (int)std::thread::hardware_concurrency();
++        }
+         if (hwt != 0) threadPool = estd::thread_pool{hwt+1};
+     }
+-};
+\ No newline at end of file
++};
+diff --git a/include/stickersolve/solver/PuzzleSolver.h b/include/stickersolve/solver/PuzzleSolver.h
+index 55d21b6..5ce6f59 100755
+--- a/include/stickersolve/solver/PuzzleSolver.h
++++ b/include/stickersolve/solver/PuzzleSolver.h
+@@ -62,6 +62,7 @@ protected:
+     virtual Puzzle preSolveTransform(Puzzle s1) { return s1; }
+ 
+ public:
++	static std::atomic_int64_t node_cnt;
+     int startMaxDedupDepth = 3;
+     std::function<void(int)> progressCallback = [](int) {};
+     std::function<void(int)> tableProgressCallback = [](int) {};
+@@ -141,4 +142,4 @@ public:
+     }
+ };
+ 
+-void printMoves(vector<string>& moveNames, vector<int> moves);
+\ No newline at end of file
++void printMoves(vector<string>& moveNames, vector<int> moves);
+diff --git a/include/stickersolve/solver/puzzleSolver.tpp b/include/stickersolve/solver/puzzleSolver.tpp
+index ebb0fdf..55c8e87 100755
+--- a/include/stickersolve/solver/puzzleSolver.tpp
++++ b/include/stickersolve/solver/puzzleSolver.tpp
+@@ -14,6 +14,8 @@ using namespace std;
+ 
+ void Solver::localInit() {}
+ 
++std::atomic_int64_t Solver::node_cnt = 0;
++
+ void Solver::localInitReverse() {
+     throw runtime_error(
+         string() + "This has not been implemented, remove this exception to get this functionality with bugs related "
+@@ -52,6 +54,7 @@ void Solver::generateUniqueStates(
+             moves.push_back(j);
+             if (canDiscardMoves(targetDepth - depth, moves)) { continue; }
+             State end = (start.first + move);
++			node_cnt++;
+             State trnsfrm;
+             if constexpr (removeSymetry) {
+                 trnsfrm = puzzlePtr->getUniqueSymetric(end);
+@@ -97,6 +100,7 @@ void Solver::genLev(
+         currentDepth++;
+         if (canDiscardMoves(targetDepth - currentDepth, moves)) { goto retardNoPop; }
+         ss.push(ss.top() + validMoves[moves.back()]);
++		node_cnt++;
+         if (canDiscardPosition(targetDepth - currentDepth, ss.top())) { goto retard; }
+         if (ss.top() == final) {
+             if (solutions->numResults() < numberOfSolutionsToGet) {
+@@ -124,6 +128,7 @@ void Solver::genLev(
+         }
+         if (canDiscardMoves(targetDepth - currentDepth, moves)) { goto retardNoPop; }
+         ss.push(ss.top() + validMoves[moves.back()]);
++		node_cnt++;
+         if (canDiscardPosition(targetDepth - currentDepth, ss.top())) { goto retard; }
+         if (ss.top() == final) {
+             if (solutions->numResults() < numberOfSolutionsToGet) {

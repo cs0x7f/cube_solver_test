@@ -73,6 +73,8 @@ function h48() (
 	echo "test h48$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
 	cd h48
+	THREADS=$nthread ./configure.sh
+	make clean python
 	cat $dataset | head -n$ntest |\
 	python3 cmd.py h48$2k2 2>&1 |\
 	awk '/^Nodes visited/ {
@@ -127,6 +129,26 @@ function kocpy() (
 	}'
 )
 
+function stickersolve() (
+	echo "test stickersolve $1"
+	dataset=$(pwd)/dataset/$1.txt
+	cd ../stickersolve/build
+	cat $dataset | head -n$ntest |\
+	head -n$ntest |\
+	../stickersolve -t $nthread - 2>/dev/null |\
+	awk '/Solution found/ {
+		split($5, s, "/");
+		split($7, t, "=");
+		cnt += 1;
+		node += $4;
+		tt += $7;
+		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, $4/1e6, $7*1e6/$4);
+		system("");
+	} END {
+		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e3/node, tt/cnt);
+	}'
+)
+
 function runtest() {
 	if [[ "$1" =~ ^nxopt([0-9]{2})$ ]]; then
 		nxopt $2 ${BASH_REMATCH[1]}
@@ -136,6 +158,8 @@ function runtest() {
 		reid $2
 	elif [[ "$1" =~ ^kocpy$ ]]; then
 		kocpy $2
+	elif [[ "$1" =~ ^stickersolve$ ]]; then
+		stickersolve $2
 	elif [[ "$1" =~ ^h48(h[0-9]{1,2})$ ]]; then
 		h48 $2 ${BASH_REMATCH[1]}
 	elif [[ "$1" =~ ^cubeopt([0-9]{2})$ ]]; then
@@ -149,7 +173,7 @@ function runtest() {
 
 mkdir -p results/
 
-runtest $1 $2 | tee results/$1_$nthread_$2.txt
+runtest $1 $2 | tee results/"$1"_"$nthread"_"$2".txt
 
 # runtest nxopt11 random_move_15f
 # runtest vcube104 random_move_15f
