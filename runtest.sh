@@ -73,14 +73,13 @@ function h48() (
 	echo "test h48$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
 	cd h48
-	THREADS=$nthread ./configure.sh
-	make clean python
+	./build python
 	cat $dataset | head -n$ntest |\
-	python3 cmd.py h48$2k2 2>&1 |\
-	awk '/^Nodes visited/ {
+	python3 cmd.py h48$2k2 $nthread 2>&1 |\
+	awk '/Nodes visited/ {
 		cnt += 1;
-		node += $3;
-		curnode = $3;
+		node += $5;
+		curnode = $5;
 	} /^Time/ {
 		tt += $2;
 		curtt = $2;
@@ -96,7 +95,6 @@ function cubeopt() (
 	dataset=$(pwd)/dataset/$1.txt
 	cd ../cubeopt
 	cat $dataset | head -n$ntest |\
-	head -n$ntest |\
 	./cube$3$2 -t $nthread - |\
 	awk '/finished/ {
 		split($5, s, "/");
