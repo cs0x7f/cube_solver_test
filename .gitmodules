@@ -10,3 +10,7 @@
 [submodule "RubiksCube-OptimalSolver"]
 	path = RubiksCube-OptimalSolver
 	url = https://github.com/hkociemba/RubiksCube-OptimalSolver.git
+[submodule "CubeExplorer"]
+	path = CubeExplorer
+	url = https://github.com/cs0x7f/CubeExplorer.git
+	branch = fpc

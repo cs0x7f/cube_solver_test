@@ -114,7 +114,6 @@ function kocpy() (
 	dataset=$(pwd)/dataset/$1.txt
 	cd RubiksCube-OptimalSolver
 	cat $dataset | head -n$ntest |\
-	head -n$ntest |\
 	pypy3 cmd.py |\
 	awk '/total time/ {
 		cnt += 1;
@@ -127,12 +126,37 @@ function kocpy() (
 	}'
 )
 
+function kocce() (
+	echo "test kocce $1"
+	dataset=$(pwd)/dataset/$1.txt
+	cd CubeExplorer
+	make
+	cmd="./CommandMain"
+	arg=''
+	if [[ "$2" =~ ^1$ ]]; then
+		arg='-b'
+	elif [[ "$2" =~ ^2$ ]]; then
+		cmd=./CommandMainHuge
+		arg='-b'
+	fi
+	cat $dataset | head -n$ntest |\
+	$cmd $arg |\
+	awk '/Solved/ {
+		cnt += 1;
+		node += $6;
+		tt += $8;
+		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, $6/1e6, $8*1e9/$6);
+		system("");
+	} END {
+		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e9/node, tt/cnt);
+	}'
+)
+
 function stickersolve() (
 	echo "test stickersolve $1"
 	dataset=$(pwd)/dataset/$1.txt
 	cd ../stickersolve/build
 	cat $dataset | head -n$ntest |\
-	head -n$ntest |\
 	../stickersolve -t $nthread - 2>/dev/null |\
 	awk '/Solution found/ {
 		split($5, s, "/");
@@ -156,6 +180,8 @@ function runtest() {
 		reid $2
 	elif [[ "$1" =~ ^kocpy$ ]]; then
 		kocpy $2
+	elif [[ "$1" =~ ^kocce([012])$ ]]; then
+		kocce $2 ${BASH_REMATCH[1]}
 	elif [[ "$1" =~ ^stickersolve$ ]]; then
 		stickersolve $2
 	elif [[ "$1" =~ ^h48(h[0-9]{1,2})$ ]]; then
