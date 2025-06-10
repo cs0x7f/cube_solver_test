@@ -140,12 +140,12 @@ function kocce() (
 		arg='-b'
 	fi
 	cat $dataset | head -n$ntest |\
-	$cmd $arg |\
+	$cmd $arg -t $nthread |\
 	awk '/Solved/ {
 		cnt += 1;
 		node += $6;
-		tt += $8;
-		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, $6/1e6, $8*1e9/$6);
+		tt += $8/'$nthread';
+		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, $6/1e6, $8*1e9/$6/'$nthread');
 		system("");
 	} END {
 		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e9/node, tt/cnt);
