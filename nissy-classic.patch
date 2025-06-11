@@ -1,0 +1,96 @@
+diff --git a/src/cubetypes.h b/src/cubetypes.h
+index b082518..48b0c60 100644
+--- a/src/cubetypes.h
++++ b/src/cubetypes.h
+@@ -233,6 +233,7 @@ dfsarg
+ 	AlgList *                 sols;
+ 	pthread_mutex_t *         sols_mutex;
+ 	Alg *                     current_alg;
++	uint64_t                  *p_n_node;
+ };
+ 
+ struct
+@@ -302,6 +303,7 @@ solveoptions
+ 	bool                      all;
+ 	bool                      print_number;
+ 	bool                      count_only;
++	uint64_t                  n_node;
+ };
+ 
+ struct
+diff --git a/src/solve.c b/src/solve.c
+index 1078816..202a355 100644
+--- a/src/solve.c
++++ b/src/solve.c
+@@ -78,6 +78,7 @@ copy_dfsarg(DfsArg *src, DfsArg *dst)
+ 	dst->sols          = src->sols;
+ 	dst->sols_mutex    = src->sols_mutex;
+ 	dst->current_alg   = src->current_alg;
++	dst->p_n_node      = src->p_n_node;
+ 
+ 	copy_estimatedata(src->ed, dst->ed);
+ }
+@@ -87,6 +88,8 @@ dfs(DfsArg *arg)
+ {
+ 	bool sw = false;
+ 
++	(*arg->p_n_node)++;
++
+ 	if (dfs_stop(arg))
+ 		return;
+ 
+@@ -256,11 +259,13 @@ instance_thread(void *arg)
+ 	ThreadDataSolve *td;
+ 	AlgListNode *node;
+ 	DfsArg darg;
++	uint64_t n_node;
+ 
+ 	td = (ThreadDataSolve *)arg;
+ 
+ 	while (1) {
+ 		b = false;
++		n_node = 0;
+ 
+ 		pthread_mutex_lock(td->start_mutex);
+ 		if ((node = *(td->node)) == NULL)
+@@ -295,9 +300,13 @@ instance_thread(void *arg)
+ 		reset_estimatedata(darg.ed);
+ 		darg.badmoves        = 0;
+ 		darg.badmovesinv     = 0;
++		darg.p_n_node        = &n_node;
+ 
+ 		dfs(&darg);
+ 
++		pthread_mutex_lock(td->start_mutex);
++		td->opts->n_node += n_node;
++		pthread_mutex_unlock(td->start_mutex);
+ 		free_alg(darg.current_alg);
+ 		free(darg.ed);
+ 	}
+@@ -400,6 +409,7 @@ solve(Cube cube, Step *step, SolveOptions *opts)
+ 	AlgList *sols;
+ 	Cube c;
+ 	Trans tt[NTRANS];
++	struct timespec start, end;
+ 
+ 	prepare_step(step, opts);
+ 
+@@ -433,6 +443,8 @@ solve(Cube cube, Step *step, SolveOptions *opts)
+ 	}
+ 
+ 	op = -1;
++	opts->n_node = 0;
++	clock_gettime(CLOCK_MONOTONIC, &start);
+ 	for (d = opts->min_moves; !solvestop(d, op, opts, sols); d++) {
+ 		if (opts->verbose)
+ 			fprintf(stderr, "Searching depth %d\n", d);
+@@ -444,6 +456,9 @@ solve(Cube cube, Step *step, SolveOptions *opts)
+ 				op = d;
+ 		}
+ 	}
++	clock_gettime(CLOCK_MONOTONIC, &end);
++	fprintf(stderr, "Search done, %ld nodes visited, tt= %ld us\n",
++		opts->n_node, (end.tv_sec - start.tv_sec) * 1000000 + (end.tv_nsec - start.tv_nsec) / 1000);
+ 
+ 	return sols;
+ }

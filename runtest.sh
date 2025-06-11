@@ -90,6 +90,25 @@ function h48() (
 	}'
 )
 
+function nissy-classic() (
+	echo "test nissy-classic $1"
+	dataset=$(pwd)/dataset/$1.txt
+	cd nissy-classic
+	cat $dataset | head -n$ntest | sed "s/1/ /g" | sed "s/3/'/g" | awk '{print "solve optimal -t '$nthread' "$0}' |\
+	./nissy 2>&1 |\
+	awk '@load "time"; /Search done/ {
+		curnode = $3;
+		curtt = $7 / 1000000;
+		cnt += 1;
+		tt += curtt;
+		node += curnode;
+		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, curnode/1e6, curtt*1e9/curnode);
+		system("");
+	} END {
+		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e9/node, tt/cnt);
+	}'
+)
+
 function cubeopt() (
 	echo "test cube$3$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
@@ -127,7 +146,7 @@ function kocpy() (
 )
 
 function kocce() (
-	echo "test kocce $1"
+	echo "test kocce$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
 	cd CubeExplorer
 	make
@@ -186,6 +205,8 @@ function runtest() {
 		stickersolve $2
 	elif [[ "$1" =~ ^h48(h[0-9]{1,2})$ ]]; then
 		h48 $2 ${BASH_REMATCH[1]}
+	elif [[ "$1" =~ ^nissy-classic$ ]]; then
+		nissy-classic $2
 	elif [[ "$1" =~ ^cubeopt([0-9]{2})$ ]]; then
 		cubeopt $2 ${BASH_REMATCH[1]} "opt"
 	elif [[ "$1" =~ ^cube48opt([0-9]{1,2})$ ]]; then
