@@ -96,7 +96,7 @@ function nissy-classic() (
 	cd nissy-classic
 	cat $dataset | head -n$ntest | sed "s/1/ /g" | sed "s/3/'/g" | awk '{print "solve optimal -t '$nthread' "$0}' |\
 	./nissy 2>&1 |\
-	awk '@load "time"; /Search done/ {
+	awk '/Search done/ {
 		curnode = $3;
 		curtt = $7 / 1000000;
 		cnt += 1;
@@ -190,6 +190,27 @@ function stickersolve() (
 	}'
 )
 
+function mf3color() {
+	echo "test mf3color"
+	dataset=$(pwd)/dataset/$1.txt
+	cd 3ColorCube
+	python3 -m http.server -b localhost 8000 2>&1 > /dev/null &
+	jpid="$!"
+	cat $dataset | head -n$ntest |\
+	sed "s/1/ /g" | sed "s/3/'/g" |\
+	node mf3color.benchmark.js -t $nthread |\
+	awk '/Solved/ {
+		cnt += 1;
+		node += $3;
+		tt += $5 / 1000;
+		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, $3/1e6, $5*1e6/$3);
+		system("");
+	} END {
+		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e9/node, tt/cnt);
+	}'
+	kill $jpid
+}
+
 function runtest() {
 	if [[ "$1" =~ ^nxopt([0-9]{2})$ ]]; then
 		nxopt $2 ${BASH_REMATCH[1]}
@@ -207,6 +228,8 @@ function runtest() {
 		h48 $2 ${BASH_REMATCH[1]}
 	elif [[ "$1" =~ ^nissy-classic$ ]]; then
 		nissy-classic $2
+	elif [[ "$1" =~ ^mf3color$ ]]; then
+		mf3color $2
 	elif [[ "$1" =~ ^cubeopt([0-9]{2})$ ]]; then
 		cubeopt $2 ${BASH_REMATCH[1]} "opt"
 	elif [[ "$1" =~ ^cube48opt([0-9]{1,2})$ ]]; then

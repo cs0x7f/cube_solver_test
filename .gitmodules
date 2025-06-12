@@ -17,3 +17,6 @@
 [submodule "nissy-classic"]
 	path = nissy-classic
 	url = https://github.com/sebastianotronto/nissy-classic.git
+[submodule "3ColorCube"]
+	path = 3ColorCube
+	url = https://github.com/mfeather1/3ColorCube.git
