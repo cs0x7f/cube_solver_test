@@ -4,6 +4,10 @@ if [ -z $ntest ]; then
 	ntest=10
 fi
 
+if [ -z $ngroup ]; then
+	ngroup=1
+fi
+
 if [ -z $nthread ]; then
 	nthread=1
 fi
@@ -73,7 +77,7 @@ function h48() (
 	echo "test h48$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
 	cd h48
-	./build python
+	./build.sh python
 	cat $dataset | head -n$ntest |\
 	python3 cmd.py h48$2k2 $nthread 2>&1 |\
 	awk '/Nodes visited/ {
@@ -114,17 +118,17 @@ function cubeopt() (
 	dataset=$(pwd)/dataset/$1.txt
 	cd ../cubeopt
 	cat $dataset | head -n$ntest |\
-	./cube$3$2 -t $nthread - |\
+	./cube$3$2 -t $nthread -g $ngroup - |\
 	awk '/finished/ {
 		split($5, s, "/");
 		split($7, t, "=");
 		cnt += 1;
 		node += s[1];
 		tt += t[2] / 1000;
-		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, s[1]/1e6, t[2]*1e6/s[1]);
+		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, s[1]/1e6, t[2]*1e6/(s[1] + 1)/'$ngroup');
 		system("");
 	} END {
-		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e9/node, tt/cnt);
+		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e9/node/'$ngroup', tt/cnt);
 	}'
 )
 
