@@ -1,11 +1,13 @@
-import nissy_python_module as nissy
-import sys
 import re
 import time
+import sys, os
+sys.path.append(os.getcwd())
+sys.path.append(os.getcwd() + os.path.sep + "python")
+import nissy
 
 def main():
-	if len(sys.argv) < 3 or not re.match(r'^h48h[0-9]{1,2}k[0-9]$', sys.argv[1]) or not re.match(r'^[0-9]*$', sys.argv[2]):
-		print("usage: python3 cmd.py h48h?k? n_thread")
+	if len(sys.argv) < 3 or not re.match(r'^h48h[0-9]{1,2}$', sys.argv[1]) or not re.match(r'^[0-9]*$', sys.argv[2]):
+		print("usage: python3 cmd.py h48h? n_thread")
 		return
 	solver = sys.argv[1]
 	n_thread = int(sys.argv[2])

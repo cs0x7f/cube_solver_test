@@ -79,7 +79,7 @@ function h48() (
 	cd h48
 	./build.sh python
 	cat $dataset | head -n$ntest |\
-	python3 cmd.py h48$2k2 $nthread 2>&1 |\
+	python3 cmd.py h48$2 $nthread 2>&1 |\
 	awk '/Nodes visited/ {
 		cnt += 1;
 		node += $5;
