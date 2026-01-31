@@ -12,6 +12,10 @@ if [ -z $nthread ]; then
 	nthread=1
 fi
 
+if [ -z $maxl ]; then
+	maxl=21
+fi
+
 function nxopt() (
 	echo "test nxopt$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
@@ -77,7 +81,6 @@ function h48() (
 	echo "test h48$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
 	cd h48
-	./build.sh python
 	cat $dataset | head -n$ntest |\
 	python3 cmd.py h48$2 $nthread 2>&1 |\
 	awk '/Nodes visited/ {
@@ -118,8 +121,8 @@ function cubeopt() (
 	dataset=$(pwd)/dataset/$1.txt
 	cd ../cubeopt
 	cat $dataset | head -n$ntest |\
-	./cube$3$2 -t $nthread -g $ngroup - |\
-	awk '/finished/ {
+	./cube$3$2 -t $nthread -g $ngroup -m $maxl - |\
+	awk '/(finished|unsolved)/ {
 		split($5, s, "/");
 		split($7, t, "=");
 		cnt += 1;
@@ -215,6 +218,23 @@ function mf3color() {
 	kill $jpid
 }
 
+function optjava() {
+	echo "test optjava $1"
+	dataset=$(pwd)/dataset/$1.txt
+	cd optjava
+	cat $dataset | head -n$ntest | awk '{print 1; print; print 1}' |\
+	java -Xmx8g -cp out cube.app.Main 2>&1 |\
+	awk '/total time/ {
+		cnt += 1;
+		node += $7;
+		tt += $3;
+		printf("%03d %.3fM nodes, %0.3f ns/node\n", cnt - 1, $7/1e6, $3*1e9/$7);
+		system("");
+	} END {
+		if (cnt > 0) printf("Avg %.3fM nodes, %0.3f ns/node, tt=%0.3fs\n\n", node/1e6/cnt, tt*1e9/node, tt/cnt);
+	}'
+}
+
 function runtest() {
 	if [[ "$1" =~ ^nxopt([0-9]{2})$ ]]; then
 		nxopt $2 ${BASH_REMATCH[1]}
@@ -240,6 +260,8 @@ function runtest() {
 		cubeopt $2 ${BASH_REMATCH[1]} "48opt"
 	elif [[ "$1" =~ ^cubenp([0-9]{2})$ ]]; then
 		cubeopt $2 ${BASH_REMATCH[1]} "np"
+	elif [[ "$1" =~ ^optjava$ ]]; then
+		optjava $2 ${BASH_REMATCH[1]}
 	fi
 }
 

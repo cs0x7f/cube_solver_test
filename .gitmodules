@@ -5,7 +5,7 @@
 	path = vcube
 	url = https://github.com/Voltara/vcube.git
 [submodule "h48"]
-	path = h48
+	path = nissy-core
 	url = https://github.com/sebastianotronto/h48.git
 [submodule "RubiksCube-OptimalSolver"]
 	path = RubiksCube-OptimalSolver
@@ -20,3 +20,6 @@
 [submodule "3ColorCube"]
 	path = 3ColorCube
 	url = https://github.com/mfeather1/3ColorCube.git
+[submodule "optjava"]
+	path = optjava
+	url = https://github.com/abdelmaged92/Rubiks-Cube-Optimal-Solver.git
