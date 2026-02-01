@@ -24,6 +24,8 @@ Detailed Results: https://github.com/cs0x7f/cube_solver_test/wiki
 
 # Brief Results
 
+Left (less memory) and bottom (less solving time per cube) is better.
+
 ![solving time vs table size](img/result-12t.png)
 
 Platform: Intel Core i7-10750H (6-core 12-thread), transparent hugepage is set to "always"
