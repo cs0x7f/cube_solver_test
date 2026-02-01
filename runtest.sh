@@ -80,7 +80,7 @@ function reid() (
 function h48() (
 	echo "test h48$2 $1"
 	dataset=$(pwd)/dataset/$1.txt
-	cd h48
+	cd nissy-core
 	cat $dataset | head -n$ntest |\
 	python3 cmd.py h48$2 $nthread 2>&1 |\
 	awk '/Nodes visited/ {
